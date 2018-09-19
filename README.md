@@ -40,3 +40,5 @@ It's time to see results. Just open **gantt.html** inside this project.
 [xcodeproj](https://github.com/CocoaPods/Xcodeproj) - Create and modify Xcode projects from Ruby.  
 [d3js-gantt](https://github.com/dk8996/Gantt-Chart) - Gantt chart for d3js by [@dk8996](https://github.com/dk8996)
 
+## P.S.
+If something doesn't work - please [fix it](https://github.com/PaulTaykalo/xcode-build-times-rendering/pulls)

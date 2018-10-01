@@ -134,6 +134,10 @@ d3.gantt = function () {
 
         var svg = d3.select(".chart");
 
+        svg.attr("width", width + margin.left + margin.right)
+            .attr("height", height + margin.top + margin.bottom);
+
+
         var ganttChartGroup = svg.select(".gantt-chart");
         var rect = ganttChartGroup.selectAll("rect").data(tasks, keyFunction);
 

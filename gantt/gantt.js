@@ -112,5 +112,20 @@ function build_gantt_chart() {
 
     gantt(tasks, legend);
 
+    var w = window;
+    function updateWindow(){
+        x = w.innerWidth || e.clientWidth || g.clientWidth;
+        y = w.innerHeight|| e.clientHeight|| g.clientHeight;
+
+        console.log("Gantt value " + gantt.margin);
+        var margin = gantt.margin();
+        gantt
+            .width(x - margin.left - margin.right - 5)
+            .height(y - margin.top - margin.bottom - 5)
+            .redraw(tasks);
+    }
+    d3.select(window).on('resize.updatesvg', updateWindow);
+
+
 };
 

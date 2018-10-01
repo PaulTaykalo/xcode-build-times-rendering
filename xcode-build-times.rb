@@ -43,6 +43,26 @@ class XcodeBuildTimer
 
   end
 
+  def remove_timings(xcodeproj_path)
+    begin
+      project = Xcodeproj::Project.open(xcodeproj_path)
+    rescue Exception => e
+      puts '[???]'.yellow + " There were some problems in opening #{xcodeproj_path} : #{e.to_s}"
+      return
+    end
+
+    project.native_targets.each do |target|
+      start_target = target.shell_script_build_phases.find {|phase| phase.name == 'Timing START' }
+      start_target.remove_from_project if start_target
+
+      end_target = target.shell_script_build_phases.find {|phase| phase.name == 'Timing END' }
+      end_target.remove_from_project if end_target
+    end
+
+    project.save
+
+  end
+
   def inject_timings_to_all_projects(inject_path)
 
     Dir.chdir(inject_path) {
@@ -53,6 +73,18 @@ class XcodeBuildTimer
       }
     }
   end
+
+  def remove_timings_from_all_projects(inject_path)
+
+    Dir.chdir(inject_path) {
+      all_xcode_projects = Dir.glob('**/*.xcodeproj').reject {|path| !File.directory?(path)}
+      all_xcode_projects.each {|xcodeproj|
+        puts "Removing timings phases from #{xcodeproj.green}"
+        remove_timings(xcodeproj)
+      }
+    }
+  end
+
 
   def generate_events_js
     begin
@@ -83,6 +115,11 @@ until arguments.empty?
     path = arguments.shift
   end
 
+  if item == 'uninstall'
+    command = item
+    path = arguments.shift
+  end
+
   if item == 'generate'
     command = item
   end
@@ -93,7 +130,11 @@ if command == 'generate'
 elsif command == 'install'
   puts '[?PATH?]'.yellow + 'Please provide path' unless path
   XcodeBuildTimer.new.inject_timings_to_all_projects(path)
+elsif command == 'uninstall'
+  puts '[?PATH?]'.yellow + 'Please provide path' unless path
+  XcodeBuildTimer.new.remove_timings_from_all_projects(path)
 elsif
-  puts '[HELP] '.yellow + 'Run ' + 'xcode-build-time.rb install <path>'.magenta + ' to install build script phases in all .xcodeproj files in specified dir' + "\n" +
-       '[HELP] '.yellow + 'Run ' + 'xcode-build-time.rb generate      '.magenta + ' to generate events for visualization after build'
+  puts '[HELP] '.yellow + 'Run ' + 'xcode-build-time.rb install   <path>'.magenta + ' to install build script phases in all .xcodeproj files in specified dir' + "\n" +
+       '[HELP] '.yellow + 'Run ' + 'xcode-build-time.rb uninstall <path>'.magenta + ' to uninstall build script phases from all .xcodeproj files in specified dir' + "\n" +
+       '[HELP] '.yellow + 'Run ' + 'xcode-build-time.rb generate        '.magenta + ' to generate events for visualization after build'
 end

@@ -3,11 +3,17 @@ build_gantt_chart();
 // We expect to have events here, so let's have them
 console.log(raw_events);
 
+function funhash(s) {
+    for (var i = 0, h = 1; i < s.length; i++)
+        h = Math.imul(h + s.charCodeAt(i) | 0, 2654435761);
+    return (h ^ h >>> 17) >>> 0;
+};
+
 function transform_events_to_tasks(events) {
     var found_events_start = {};
     var found_events_ends = {};
     var tasks = [];
-    var statuses = ["KILLED", "SUCCEEDED", "FAILED", "RUNNING"];
+    var colors = ['#CC0000', '#669900', '#ffbb33', '#33b5e5'];
     for (var i = 0, l = events.length; i < l; i++) {
         var event = events[l - i - 1];
         console.log('[EVENT]' + JSON.stringify(event));
@@ -37,7 +43,7 @@ function transform_events_to_tasks(events) {
                 "startDate": new Date(start_event.date),
                 "endDate": new Date(end_event.date),
                 "taskName": taskName,
-                "status": statuses[i % statuses.length]
+                "color": colors[funhash(taskName) % colors.length]
             })
         }
     }
@@ -45,14 +51,7 @@ function transform_events_to_tasks(events) {
     var names = tasks.map(task => task.taskName);
     return {
         "tasks": tasks,
-        "names": names,
-        "taskStatus":
-            {
-                "SUCCEEDED": "bar",
-                "FAILED": "bar-failed",
-                "RUNNING": "bar-running",
-                "KILLED": "bar-killed"
-            }
+        "names": names
     }
 }
 
@@ -107,7 +106,6 @@ function build_gantt_chart() {
 
     var gantt = d3.gantt()
         .taskTypes(tasks_result.names)
-        .taskStatus(tasks_result.taskStatus)
         .tickFormat("%M:%S")
         .timeDomainMode("fixed")
         .timeDomain([minDate, new Date(minDate.getTime() + max_time)]);

@@ -18,7 +18,6 @@ d3.gantt = function () {
     var timeDomainEnd = d3.time.hour.offset(new Date(), +3);
     var timeDomainMode = FIT_TIME_DOMAIN_MODE;// fixed or fit
     var taskTypes = [];
-    var taskStatus = [];
     var height = document.body.clientHeight - margin.top - margin.bottom - 5;
     var width = document.body.clientWidth - margin.right - margin.left - 5;
 
@@ -89,9 +88,8 @@ d3.gantt = function () {
             .append("rect")
             .attr("rx", 5)
             .attr("ry", 5)
-            .attr("class", function (d) {
-                if (taskStatus[d.status] == null) { return "bar";}
-                return taskStatus[d.status];
+            .attr("fill", function (d) {
+                return d.color
             })
             .attr("y", 0)
             .attr("transform", rectTransform)
@@ -143,9 +141,8 @@ d3.gantt = function () {
             .insert("rect", ":first-child")
             .attr("rx", 5)
             .attr("ry", 5)
-            .attr("class", function (d) {
-                if (taskStatus[d.status] == null) { return "bar";}
-                return taskStatus[d.status];
+            .attr("fill", function (d) {
+                return d.color
             })
             .transition()
             .attr("y", 0)
@@ -201,13 +198,6 @@ d3.gantt = function () {
         if (!arguments.length)
             return taskTypes;
         taskTypes = value;
-        return gantt;
-    };
-
-    gantt.taskStatus = function (value) {
-        if (!arguments.length)
-            return taskStatus;
-        taskStatus = value;
         return gantt;
     };
 

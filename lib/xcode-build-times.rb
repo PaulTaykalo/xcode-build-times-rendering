@@ -1,7 +1,6 @@
 #!/usr/bin/ruby
 #encoding: utf-8
 require 'xcodeproj'
-require 'FileUtils'
 require_relative 'stringcolors'
 
 class XcodeBuildTimer
@@ -9,8 +8,6 @@ class XcodeBuildTimer
   def initialize(options)
     @inject_path = options[:inject_path] || ''
     @events_file_path = options[:events_file_path]
-
-    puts "Events file path #{@events_file_path}"
   end
 
   def add_timings(xcodeproj_path)
@@ -117,48 +114,5 @@ class XcodeBuildTimer
            '[EVENTS]'.green + " It's time to open #{js_chart_directory}/gantt.html"
     end
   end
-
-end
-
-options = {
-  :events_file_path => '~/.timings.xcode',
-  :command => 'unknown'
-}
-
-arguments = ARGV.clone
-until arguments.empty?
-  item = arguments.shift
-  case item
-  when 'install'
-    options[:command] = item
-    options[:inject_path] = File.expand_path(arguments.shift)
-  when 'uninstall'
-    options[:command] = item
-    options[:inject_path] = File.expand_path(arguments.shift)
-  when 'generate'
-    options[:command] = item
-  when '--events-file'
-    options[:events_file_path] = File.expand_path(arguments.shift)
-  else
-    puts '[?PARAMETER?] '.yellow + "Unknown parameter #{item}"
-  end
-end
-
-buildtimer = XcodeBuildTimer.new(options)
-case options[:command]
-when 'generate'
-  buildtimer.generate_events_js
-when 'install'
-  puts '[?PATH?]'.yellow + 'Please provide path' unless options[:inject_path]
-  buildtimer.inject_timings_to_all_projects
-when 'uninstall'
-  puts '[?PATH?]'.yellow + 'Please provide path' unless options[:inject_path]
-  buildtimer.remove_timings_from_all_projects
-else
-  puts '[HELP] '.yellow + 'Run ' + 'xcode-build-time.rb install   <path>'.magenta + ' to install build script phases in all .xcodeproj files in specified dir' + "\n" +
-       '[HELP] '.yellow + 'Run ' + 'xcode-build-time.rb uninstall <path>'.magenta + ' to uninstall build script phases from all .xcodeproj files in specified dir' + "\n" +
-       '[HELP] '.yellow + 'Run ' + 'xcode-build-time.rb generate        '.magenta + ' to generate events for visualization after build' + "\n" +
-       '[HELP] '.yellow + 'OPTIONS' + "\n" +
-       '[HELP] '.yellow + ' --events-file [path] '.magenta + ' Specifies where events should be stored to or read from on generation '
 
 end

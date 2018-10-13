@@ -3,19 +3,19 @@ Xcode build times visualization per target
 ![image](https://user-images.githubusercontent.com/119268/45782819-abd2aa00-bc6c-11e8-9ee0-114c020f238a.png)
 
 # Installation
-In order to use this one, you'll need to install [xcodeproj](https://www.rubydoc.info/gems/xcodeproj) gem
 ```
-[sudo] gem install xcodeproj
+[sudo] gem install xcode-build-times
 ```
 # Injection
 In order to gather target build times, we're about to add build phases "START" and "END" for **EACH** target in **EACH** project at specified path.
 ```
-./xcode-build-times.rb install ~/Projects/<My_slowly_building_project>/
+xcode-build-times install ~/Projects/<My_slowly_building_project>/
 ```
 ![image](https://user-images.githubusercontent.com/119268/45782420-898c5c80-bc6b-11e8-9200-d54dbc5ea56f.png)
 
 # Events
 After installation, all build events will be saved to `~/.timings.xcode` file
+**NOTE**: You can override this default setting by passing `--events-file` parameter on installation script
 ```
 ...
 {"date":"2018-09-19T22:52:04.1537386724", "taskName":"A", "event":"start"},
@@ -28,12 +28,13 @@ After installation, all build events will be saved to `~/.timings.xcode` file
 # Generating Visualization Events
 Once desired build is done, it's time to dump raw events in place we need in order to render them.
 This can be done by running
+**NOTE**: You can use differnt timings files by passing `--events-file` parameter
 ```
-./xcode-build-times.rb generate
+xcode-build-times generate [--events-file <path>]
 ```
 
 # Open gantt.html
-It's time to see results. Just open **gantt.html** inside this project.
+It's time to see results. Just open **xcode-build-times-chart/gantt.html**.
 
 ## Libraries and Kudos
 [d3js](https://d3js.org/) - JavaScript library for manipulating documents based on data  

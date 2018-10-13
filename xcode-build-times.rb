@@ -1,9 +1,18 @@
 #!/usr/bin/ruby
 #encoding: utf-8
 require 'xcodeproj'
+require 'FileUtils'
 require_relative 'stringcolors'
 
 class XcodeBuildTimer
+
+  def initialize(options)
+    @inject_path = options[:inject_path] || ''
+    @events_file_path = options[:events_file_path]
+
+    puts "Events file path #{@events_file_path}"
+  end
+
   def add_timings(xcodeproj_path)
     begin
       project = Xcodeproj::Project.open(xcodeproj_path)
@@ -18,7 +27,7 @@ class XcodeBuildTimer
         timing_start = target.new_shell_script_build_phase('Timing START')
         timing_start.shell_script = <<-eos
       DATE=`date "+%Y-%m-%dT%H:%M:%S.%s"`
-      echo "{\\"date\\":\\"$DATE\\", \\"taskName\\":\\"$TARGETNAME\\", \\"event\\":\\"start\\"}," >> ~/.timings.xcode
+      echo "{\\"date\\":\\"$DATE\\", \\"taskName\\":\\"$TARGETNAME\\", \\"event\\":\\"start\\"}," >> "#{@events_file_path}"
         eos
 
         index = target.build_phases.index {|phase| (defined? phase.name) && phase.name == 'Timing START'
@@ -33,7 +42,7 @@ class XcodeBuildTimer
         timing_end = target.new_shell_script_build_phase('Timing END')
         timing_end.shell_script = <<-eos
       DATE=`date "+%Y-%m-%dT%H:%M:%S.%s"`
-      echo "{\\"date\\":\\"$DATE\\", \\"taskName\\":\\"$TARGETNAME\\", \\"event\\":\\"end\\"}," >> ~/.timings.xcode
+      echo "{\\"date\\":\\"$DATE\\", \\"taskName\\":\\"$TARGETNAME\\", \\"event\\":\\"end\\"}," >> "#{@events_file_path}"
         eos
       end
 
@@ -63,9 +72,9 @@ class XcodeBuildTimer
 
   end
 
-  def inject_timings_to_all_projects(inject_path)
+  def inject_timings_to_all_projects
 
-    Dir.chdir(inject_path) {
+    Dir.chdir(@inject_path) {
       all_xcode_projects = Dir.glob('**/*.xcodeproj').reject {|path| !File.directory?(path)}
       all_xcode_projects.each {|xcodeproj|
         puts "Adding timings phases to #{xcodeproj.green}"
@@ -74,9 +83,9 @@ class XcodeBuildTimer
     }
   end
 
-  def remove_timings_from_all_projects(inject_path)
+  def remove_timings_from_all_projects
 
-    Dir.chdir(inject_path) {
+    Dir.chdir(@inject_path) {
       all_xcode_projects = Dir.glob('**/*.xcodeproj').reject {|path| !File.directory?(path)}
       all_xcode_projects.each {|xcodeproj|
         puts "Removing timings phases from #{xcodeproj.green}"
@@ -88,53 +97,68 @@ class XcodeBuildTimer
 
   def generate_events_js
     begin
-      raw_events = File.read(File.expand_path('~/.timings.xcode'))
+      raw_events = File.read(File.expand_path(@events_file_path))
     rescue
-      puts '[???]'.yellow + " There were some problems in opening ~/.timings.xcode (It doesn't seem that build was created)"
+      puts '[???]'.yellow + " There were some problems in opening #{@events_file_path} (It doesn't seem that build was created)"
       return
     end
 
+    js_chart_directory = 'xcode-build-times-chart'
+    unless File.exist?(js_chart_directory)
+      puts "[CHART] Will copy chart to #{Dir.pwd}"
+      source_dir = File.expand_path("../#{js_chart_directory}", __FILE__)
+      FileUtils.copy_entry(source_dir, File.expand_path(js_chart_directory))
+    end
+
     js_valid_file = "var raw_events = [\n" + raw_events + "\n]"
-    open('gantt/events.js', 'w') do |f|
+    open("#{js_chart_directory}/events.js", 'w') do |f|
       f << js_valid_file
       puts '[EVENTS]'.green + " Updated events.js at #{f.path}\n" +
-           '[EVENTS]'.green + " It's time to open gantt.html"
+           '[EVENTS]'.green + " It's time to open #{js_chart_directory}/gantt.html"
     end
   end
 
 end
 
-path = nil
-command = 'unknown'
+options = {
+  :events_file_path => '~/.timings.xcode',
+  :command => 'unknown'
+}
 
 arguments = ARGV.clone
 until arguments.empty?
   item = arguments.shift
-  if item == 'install'
-    command = item
-    path = arguments.shift
-  end
-
-  if item == 'uninstall'
-    command = item
-    path = arguments.shift
-  end
-
-  if item == 'generate'
-    command = item
+  case item
+  when 'install'
+    options[:command] = item
+    options[:inject_path] = File.expand_path(arguments.shift)
+  when 'uninstall'
+    options[:command] = item
+    options[:inject_path] = File.expand_path(arguments.shift)
+  when 'generate'
+    options[:command] = item
+  when '--events-file'
+    options[:events_file_path] = File.expand_path(arguments.shift)
+  else
+    puts '[?PARAMETER?] '.yellow + "Unknown parameter #{item}"
   end
 end
 
-if command == 'generate'
-  XcodeBuildTimer.new.generate_events_js
-elsif command == 'install'
-  puts '[?PATH?]'.yellow + 'Please provide path' unless path
-  XcodeBuildTimer.new.inject_timings_to_all_projects(path)
-elsif command == 'uninstall'
-  puts '[?PATH?]'.yellow + 'Please provide path' unless path
-  XcodeBuildTimer.new.remove_timings_from_all_projects(path)
-elsif
+buildtimer = XcodeBuildTimer.new(options)
+case options[:command]
+when 'generate'
+  buildtimer.generate_events_js
+when 'install'
+  puts '[?PATH?]'.yellow + 'Please provide path' unless options[:inject_path]
+  buildtimer.inject_timings_to_all_projects
+when 'uninstall'
+  puts '[?PATH?]'.yellow + 'Please provide path' unless options[:inject_path]
+  buildtimer.remove_timings_from_all_projects
+else
   puts '[HELP] '.yellow + 'Run ' + 'xcode-build-time.rb install   <path>'.magenta + ' to install build script phases in all .xcodeproj files in specified dir' + "\n" +
        '[HELP] '.yellow + 'Run ' + 'xcode-build-time.rb uninstall <path>'.magenta + ' to uninstall build script phases from all .xcodeproj files in specified dir' + "\n" +
-       '[HELP] '.yellow + 'Run ' + 'xcode-build-time.rb generate        '.magenta + ' to generate events for visualization after build'
+       '[HELP] '.yellow + 'Run ' + 'xcode-build-time.rb generate        '.magenta + ' to generate events for visualization after build' + "\n" +
+       '[HELP] '.yellow + 'OPTIONS' + "\n" +
+       '[HELP] '.yellow + ' --events-file [path] '.magenta + ' Specifies where events should be stored to or read from on generation '
+
 end

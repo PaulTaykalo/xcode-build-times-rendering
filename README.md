@@ -14,7 +14,7 @@ xcode-build-times install ~/Projects/<My_slowly_building_project>/
 ![image](https://user-images.githubusercontent.com/119268/45782420-898c5c80-bc6b-11e8-9200-d54dbc5ea56f.png)
 
 # Events
-After installation, all build events will be saved to `~/.timings.xcode` file
+After installation, all build events will be saved to `~/.timings.xcode` file  
 **NOTE**: You can override this default setting by passing `--events-file` parameter on installation script
 ```
 ...
@@ -27,7 +27,7 @@ After installation, all build events will be saved to `~/.timings.xcode` file
 
 # Generating Visualization Events
 Once desired build is done, it's time to dump raw events in place we need in order to render them.
-This can be done by running
+This can be done by running  
 **NOTE**: You can use differnt timings files by passing `--events-file` parameter
 ```
 xcode-build-times generate [--events-file <path>]

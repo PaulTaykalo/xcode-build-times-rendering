@@ -2,6 +2,7 @@
 #encoding: utf-8
 require 'xcodeproj'
 require_relative 'stringcolors'
+require 'fileutils'
 
 class XcodeBuildTimer
 

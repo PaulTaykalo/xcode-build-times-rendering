@@ -1,10 +1,10 @@
 #!/usr/bin/env ruby
 # encoding: UTF-8
 
-require 'xcode-build-times'
+require_relative '../lib/xcode-build-times.rb'
 
 options = {
-  :events_file_path => '~/.timings.xcode',
+  :events_file_path => '${HOME}/.timings.xcode',
   :command => 'unknown'
 }
 

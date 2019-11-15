@@ -11,17 +11,19 @@ options = {
 arguments = ARGV.clone
 until arguments.empty?
   item = arguments.shift
+  argumentProjectPath = arguments.shift
+  projectPath = argumentProjectPath.nil? ? Dir.pwd : argumentProjectPath
   case item
   when 'install'
     options[:command] = item
-    options[:inject_path] = File.expand_path(arguments.shift)
+    options[:inject_path] = projectPath
   when 'uninstall'
     options[:command] = item
-    options[:inject_path] = File.expand_path(arguments.shift)
+    options[:inject_path] = projectPath
   when 'generate'
     options[:command] = item
   when '--events-file'
-    options[:events_file_path] = File.expand_path(arguments.shift)
+    options[:events_file_path] = argumentProjectPath
   else
     puts '[?PARAMETER?] '.yellow + "Unknown parameter #{item}"
   end

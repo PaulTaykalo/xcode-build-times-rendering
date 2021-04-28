@@ -1,6 +1,7 @@
 #!/usr/bin/ruby
 #encoding: utf-8
 require 'xcodeproj'
+require 'fileutils'
 require_relative 'stringcolors'
 require 'fileutils'
 
